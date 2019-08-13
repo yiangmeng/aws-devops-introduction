@@ -1,5 +1,13 @@
 ## Lab 1 - Build project on the cloud
 
+### Lab IAM Permissions
+As the AWS accounts you are about to use are **lab accounts**, they do not have permissions to make any changes to IAM settings. For any commands/steps that requires IAM Role ARN, please kindly use the pre-created role: **TeamRole**.
+
+https://console.aws.amazon.com/iam/home?region=ap-southeast-1#/roles/TeamRole
+
+***It will be useful to note down the ARN for Team Role which will be required throughout the lab***
+![TeamRole](img/teamrole.png)
+
 ### AWS Cloud9 IDE - Set up
 
 AWS Cloud9 is a cloud-based integrated development environment (IDE) that lets you write, run, and debug your code with just a browser. It includes a code editor, debugger, and terminal. Cloud9 comes pre-packaged with essential tools for popular programming languages and the AWS Command Line Interface (CLI) pre-installed so you don't need to install files or configure your laptop for this workshop. Your Cloud9 environment will have access to the same AWS resources as the user with which you logged into the AWS Management Console.
@@ -11,6 +19,9 @@ Take a moment now and setup your Cloud9 development environment.
 1. Go to the AWS Management Console, click **Services** then select **Cloud9** under Developer Tools.
 2. Click **Create environment**.
 3. Enter `MyDevEnvironment` into **Name** and optionally provide a **Description**.
+
+  ![MyDevEnv](img/MyDevEnv.png)
+
 4. Click **Next step**.
 5. You may leave **Environment settings** at their defaults of launching a new **t2.micro** EC2 instance which will be paused after **30 minutes** of inactivity.
 6. Click **Next step**.
@@ -46,27 +57,30 @@ Keep an open scratch pad in Cloud9 or a text editor on your local computer for n
 
 2. On the Welcome page, choose Get Started Now. (If a **_Dashboard_** page appears instead, choose **_Create repository_**.)
 3. On the **_Create repository_** page, in the **_Repository name_** box, type **_WebAppRepo_**.
-4. In the **_Description_** box, type **_My demonstration repository_**.
-5. Choose **_Create repository_** to create an empty AWS CodeCommit repository named **_WebAppRepo_**.
+> It is advised that you use the same repository name, **_WebAppRepo_** as it will be used throughout this lab.
+4. In the **_Description_** box, optionally type in a description for this repository.
+![WebAppRepo](img/WebAppRepo.png)
+5. Choose **_Create_** to create an empty AWS CodeCommit repository named **_WebAppRepo_**.
 
-**_Note_** The remaining steps in this tutorial assume you have named your AWS CodeCommit repository **_WebAppRepo_**. If you use a name other than **_WebAppRepo_**, be sure to use it throughout this tutorial. For more information about creating repositories, including how to create a repository from the terminal or command line, see [Create a Repository](http://docs.aws.amazon.com/codecommit/latest/userguide/how-to-create-repository.html).
+**Note:** The remaining steps in this lab assume you have named your AWS CodeCommit repository **_WebAppRepo_**. If you use a name other than **_WebAppRepo_**, be sure to use it throughout this tutorial. For more information about creating repositories, including how to create a repository from the terminal or command line, see [Create a Repository](http://docs.aws.amazon.com/codecommit/latest/userguide/how-to-create-repository.html).
 
 ***
 
 ### Stage 2: Clone the Repo
 
-Before we start to clone the Repo, we need to configure the AWS CLI credential helper to manage the credentials for connections to your CodeCommit repository. The AWS Cloud9 development environment comes with AWS managed temporary credentials that are associated with your IAM user. You use these credentials with the AWS CLI credential helper.
+Before we start to clone the Repo, we need to configure the AWS CLI credential helper to manage the credentials for connections to your AWS CodeCommit repository. The AWS Cloud9 development environment comes with AWS managed temporary credentials that are associated with your IAM user. You use these credentials with the AWS CLI credential helper.
 
 1. Update the packages within your AWS Cloud9 instance.
 ```console
 user:~/environment $ sudo yum update -y
-
 ```
+
 2. Configure your chosen user name and email to be associated with your Git commits by running the git config command. For example:
 ```console
 user:~/environment $ git config --global user.name "Mary Major"
 user:~/environment $ git config --global user.email mary.major@example.com
 ```
+>Note: You may use any name/email for the above. No emails will be sent out.
 3. Run the following commands to configure the AWS CLI credential helper for HTTPS connections:
 ```console
 user:~/environment $ git config --global credential.helper '!aws codecommit credential-helper $@'
@@ -83,10 +97,11 @@ We can now connect to the source repository created in stage 1. Here, you use Gi
 user:~/environment $ git clone https://git-codecommit.ap-southeast-1.amazonaws.com/v1/repos/WebAppRepo
 
 ```
-You would be seeing the following message if cloning is successful. 
+You would be seeing the following message if cloning is successful.
 
-***warning: You appear to have cloned an empty repository.***
-
+```console
+warning: You appear to have cloned an empty repository.
+```
 ***
 
 ### Stage 3: Commit changes to Remote Repo
@@ -94,7 +109,7 @@ You would be seeing the following message if cloning is successful.
 1. Download the Sample Web App Archive by running the following command from IDE terminal.
 
 ```console
-user:~/environment $ wget https://github.com/p55t/aws-devops-essential/raw/master/sample-app/Web-App-Archive.zip
+user:~/environment $ wget https://github.com/yiangmeng/aws-devops-introduction/raw/master/sample-app/Web-App-Archive.zip
 ```
 
 2. Unarchive and copy all the **_contents_** of the unarchived folder to your local repo folder.
@@ -136,15 +151,61 @@ For more information, see [Browse the Contents of a Repository](http://docs.aws.
 
 ### Stage 4: Prepare Build Service
 
-1. First, let us create an S3 buckets to store artifacts for our build/deploy artifacts. Run the CloudFormation stack to create S3 bucket.
-  Ensure you are launching it in the same region (Singapore: ap-southeast-1) as your AWS CodeCommit repo.
+1. First, let us create an S3 buckets to store artifacts for our build/deploy artifacts. Head over to [Amazon S3](https://s3.console.aws.amazon.com/s3/home?region=ap-southeast-1) console.
 
-```console
-user:~/environment/WebAppRepo (master) $ aws cloudformation create-stack --stack-name DevopsWorkshop-roles \
---template-body https://yhlim-share.s3-ap-southeast-1.amazonaws.com/labs/devops/01-aws-devops-workshop-s3.template
-```
+2. You will see that you have no buckets created in your account. Click on Create bucket.
 
-**_Tip_** To learn more about AWS CloudFormation, please refer to [AWS CloudFormation UserGuide.](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html)
+3. Enter `webapp-bucket-12345` as the **Bucket name**, while replacing `12345` with a random string of characters as you wish. The S3 bucket name has to be unique in the region.
+
+4. Click on **Create**.
+
+  ![CreateBucket](img/create-bucket.png)
+
+5. Let's create an AWS CodeBuild project and point to this bucket as artifact repository. Head over to [AWS CodeBuild](https://ap-southeast-1.console.aws.amazon.com/codesuite/codebuild/projects?region=ap-southeast-1) console.
+
+> Need to create codebuild role first
+
+6. Click on **Create build project**.
+
+7. Enter `MyCodeBuildProject` as the **Project name** (or anything you'd like to name the build project).
+
+8. Enter any description for the build project.
+
+9. Check **Build badge** to enable build badge.
+
+10. Under **Source provider**, select **_AWS CodeCommit_**.
+
+11. Click on **Repository** and select **_WebAppRepo_**.
+
+12. Select **_master_** for **Branch**
+
+13. Select **_Custom image_** for **Environment image**.
+
+14. Select **_Linux_** for **Environment type**.
+
+15. Select **_Amazon ECR_** for **Image registry**,
+
+16. Select **_Other ECR account_** for **ECR account**.
+
+17. Enter `aws/codebuild/java` for the **Amazon ECR repository URI**.
+
+18. Enter `openjdk-8` for the **Amazon ECR image tag**.
+
+19. Select **_New service role_** for **Service role**.
+
+20. Enter `CodeBuildRole` for **Role name**.
+
+21. Select **_Use a buildspec file_** for **Build specifications**.
+
+22. Select **_Amazon S3_** for Artifacts **Type**.
+
+23. Select **_webapp-bucket-12345_** (or whichever you have named) for the **Bucket name**.
+
+24. Enter `WebAppOutputArtifact.zip` for **Name** of the output artifact.
+
+25. Select **_Zip_** for **Artifacts packaging**.
+
+26. Click on **Create build project**.
 
 2. Upon completion take a note of the name of the bucket created. Check [describe-stacks](http://docs.aws.amazon.com/cli/latest/reference/cloudformation/describe-stacks.html) to find the output of the stack.
 ```console
@@ -161,8 +222,8 @@ user:~/environment/WebAppRepo (master) $ echo $(aws cloudformation describe-stac
 ```
 
 5. Let us **create CodeBuild** project from **CLI**. To create the build project using AWS CLI, we need JSON-formatted input.
-    **_Create_** a json file named **_'create-project.json'_** under 'MyDevEnvironment'. ![](./img/create-json.png) Copy the content below to create-project.json. (Replace the placeholders marked with **_<<>>_** with  values for BuildRole ARN and S3 Output Bucket from the previous step.) 
-    
+    **_Create_** a json file named **_'create-project.json'_** under 'MyDevEnvironment'. ![](./img/create-json.png) Copy the content below to create-project.json. (Replace the placeholders marked with **_<<>>_** with  values for BuildRole ARN and S3 Output Bucket from the previous step.)
+
 
 ```json
 {
@@ -185,7 +246,7 @@ user:~/environment/WebAppRepo (master) $ echo $(aws cloudformation describe-stac
   "serviceRole": "<<REPLACE-WITH-TEAM-ROLE-ARN>>"
 }
 ```
-    
+
   To know more about the codebuild project json [review the spec](http://docs.aws.amazon.com/codebuild/latest/userguide/create-project.html#create-project-cli).
 
 
