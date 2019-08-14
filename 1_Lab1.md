@@ -161,227 +161,162 @@ For more information, see [Browse the Contents of a Repository](http://docs.aws.
 
   ![CreateBucket](img/create-bucket.png)
 
-5. Let's create an AWS CodeBuild project and point to this bucket as artifact repository. Head over to [AWS CodeBuild](https://ap-southeast-1.console.aws.amazon.com/codesuite/codebuild/projects?region=ap-southeast-1) console.
+***
 
-> Need to create codebuild role first
+### Stage 5: Create the Build Service Role
+**AWS CodeBuild** is a fully managed continuous integration service that compiles source code, runs tests, and produces software packages that are ready to deploy. With CodeBuild, you don’t need to provision, manage, and scale your own build servers. CodeBuild scales continuously and processes multiple builds concurrently.
 
-6. Click on **Create build project**.
+1. Let's now initialize a AWS CodeBuild project. Before we do that, let's create an IAM role for this Build service to give it permissions to call other AWS services on your behalf. Head over to [IAM Roles](https://console.aws.amazon.com/iam/home?#/roles) console.
 
-7. Enter `MyCodeBuildProject` as the **Project name** (or anything you'd like to name the build project).
+2. Click on **Create role**.
 
-8. Enter any description for the build project.
+3. Under **Select type of trusted entity**, choose **AWS service**.
 
-9. Check **Build badge** to enable build badge.
+4. Under **Choose the service that will use this role** select **CodeBuild**.
 
-10. Under **Source provider**, select **_AWS CodeCommit_**.
+  ![Codebuild Role](img/codebuild-role.png)
 
-11. Click on **Repository** and select **_WebAppRepo_**.
+5. Click on **Next: Permissions**.
 
-12. Select **_master_** for **Branch**
+6. Under **Attach permission policies**, check **AWSCodeBuildAdminAccess**.
 
-13. Select **_Custom image_** for **Environment image**.
+  ![Codebuild Policies](img/codebuild-policies.png)
 
-14. Select **_Linux_** for **Environment type**.
+7. Click on **Next: Tags** to proceed.
 
-15. Select **_Amazon ECR_** for **Image registry**,
+8. Click on **Next: Review**.
 
-16. Select **_Other ECR account_** for **ECR account**.
+9. Enter `CodeBuildRole` in **Role name**.
 
-17. Enter `aws/codebuild/java` for the **Amazon ECR repository URI**.
-
-18. Enter `openjdk-8` for the **Amazon ECR image tag**.
-
-19. Select **_New service role_** for **Service role**.
-
-20. Enter `CodeBuildRole` for **Role name**.
-
-21. Select **_Use a buildspec file_** for **Build specifications**.
-
-22. Select **_Amazon S3_** for Artifacts **Type**.
-
-23. Select **_webapp-bucket-12345_** (or whichever you have named) for the **Bucket name**.
-
-24. Enter `WebAppOutputArtifact.zip` for **Name** of the output artifact.
-
-25. Select **_Zip_** for **Artifacts packaging**.
-
-26. Click on **Create build project**.
-
-2. Upon completion take a note of the name of the bucket created. Check [describe-stacks](http://docs.aws.amazon.com/cli/latest/reference/cloudformation/describe-stacks.html) to find the output of the stack.
-```console
-user:~/environment/WebAppRepo (master) $ aws cloudformation describe-stacks
-```
-
-3. For Console, refer to the CloudFormation [Outputs tab](https://ap-southeast-1.console.aws.amazon.com/cloudformation/home?region=ap-southeast-1) to see output. Make a note of the S3 bucket name. This will be used to store the output from CodeBuild in the next step. **_Sample Output:_** ![](./img/cfn-output.png)
-
-4. Run the following commands to get the value of the S3 bucket from cloudformation template launched earlier.
-
-```console
-user:~/environment/WebAppRepo (master) $ sudo yum -y install jq
-user:~/environment/WebAppRepo (master) $ echo $(aws cloudformation describe-stacks --stack-name DevopsWorkshop-roles | jq -r '.Stacks[0].Outputs[]|select(.OutputKey=="S3BucketName")|.OutputValue')
-```
-
-5. Let us **create CodeBuild** project from **CLI**. To create the build project using AWS CLI, we need JSON-formatted input.
-    **_Create_** a json file named **_'create-project.json'_** under 'MyDevEnvironment'. ![](./img/create-json.png) Copy the content below to create-project.json. (Replace the placeholders marked with **_<<>>_** with  values for BuildRole ARN and S3 Output Bucket from the previous step.)
-
-
-```json
-{
-  "name": "devops-webapp-project",
-  "source": {
-    "type": "CODECOMMIT",
-    "location": "https://git-codecommit.ap-southeast-1.amazonaws.com/v1/repos/WebAppRepo"
-  },
-  "artifacts": {
-    "type": "S3",
-    "location": "<<REPLACE-YOUR-CODEBUILD-OUTPUT-BUCKET-FROM-CLOUDFORMATION>>",
-    "packaging": "ZIP",
-    "name": "WebAppOutputArtifact.zip"
-  },
-  "environment": {
-    "type": "LINUX_CONTAINER",
-    "image": "aws/codebuild/java:openjdk-8",
-    "computeType": "BUILD_GENERAL1_SMALL"
-  },
-  "serviceRole": "<<REPLACE-WITH-TEAM-ROLE-ARN>>"
-}
-```
-
-  To know more about the codebuild project json [review the spec](http://docs.aws.amazon.com/codebuild/latest/userguide/create-project.html#create-project-cli).
-
-
-6. Switch to the directory that contains the file you just saved, and run the **_create-project_** command:
-
-```console
-user:~/environment/WebAppRepo (master) $ aws codebuild create-project --cli-input-json file://../create-project.json
-```
-
-7. Sample output JSON for your reference
-
-```json
-{
-  "project": {
-    "name": "project-name",
-    "description": "description",
-    "serviceRole": "serviceRole",
-    "tags": [
-      {
-        "key": "tags-key",
-        "value": "tags-value"
-      }
-    ],
-    "artifacts": {
-      "namespaceType": "namespaceType",
-      "packaging": "packaging",
-      "path": "path",
-      "type": "artifacts-type",
-      "location": "artifacts-location",
-      "name": "artifacts-name"
-    },
-    "lastModified": lastModified,
-    "timeoutInMinutes": timeoutInMinutes,
-    "created": created,
-    "environment": {
-      "computeType": "computeType",
-      "image": "image",
-      "type": "environment-type",
-      "environmentVariables": [
-        {
-          "name": "environmentVariable-name",
-          "value": "environmentVariable-value",
-          "type": "environmentVariable-type"
-        }
-      ]
-    },
-    "source": {
-      "type": "source-type",
-      "location": "source-location",
-      "buildspec": "buildspec",
-      "auth": {
-        "type": "auth-type",
-        "resource": "resource"
-      }
-    },
-    "encryptionKey": "encryptionKey",
-    "arn": "arn"
-  }
-}
-```
-
-8. If successful, output JSON should have values such as:
-  * The lastModified value represents the time, in Unix time format, when information about the build project was last changed.
-  * The created value represents the time, in Unix time format, when the build project was created.
-  * The ARN value represents the ARN of the build project.
-
-**_Note_** Except for the build project name, you can change any of the build project's settings later. For more information, see [Change a Build Project's Settings (AWS CLI)](http://docs.aws.amazon.com/codebuild/latest/userguide/change-project.html#change-project-cli).
+10. Click on **Create role** to complete creating the role.
 
 ***
 
-### Stage 5: Let's build the code on cloud
+### Stage 6: Create the Build Service
 
-1. A build spec is a collection of build commands and related settings in YAML format, that AWS CodeBuild uses to run a build.
-    Create a file namely, **_buildspec.yml_** under **WebAppRepo** folder. Copy the content below to the file and **save** it. To know more about [how CodeBuild works](http://docs.aws.amazon.com/codebuild/latest/userguide/concepts.html#concepts-how-it-works).
+1. Head over to [AWS CodeBuild](https://ap-southeast-1.console.aws.amazon.com/codesuite/codebuild/projects?region=ap-southeast-1) console.
 
-```yaml
-version: 0.1
+2. Click on **Create build project**.
 
-phases:
-  install:
-    commands:
-      - echo Nothing to do in the install phase...
-  pre_build:
-    commands:
-      - echo Nothing to do in the pre_build phase...
-  build:
-    commands:
-      - echo Build started on `date`
-      - mvn install
-  post_build:
-    commands:
-      - echo Build completed on `date`
-artifacts:
-  files:
-    - target/javawebdemo.war
-  discard-paths: no
-```
+#### Project configuration
+3. Enter `MyCodeBuildProject` as the **Project name** (or anything you'd like to name the build project).
 
-As a sample shown below:
+4. Enter any description for the build project.
 
-![buildspec](./img/build-spec.png)
+5. Check **Enable build badge** to enable build badges.
 
-**_Note_** Visit this [page](http://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html) to know more about build spec and how you can use multiple build specs in the same repo.
+  ![Codebuild Project](img/codebuild-project.png)
 
-2. Commit & push the build specification file to repository
+#### Source Setup
+6. Under **Source provider**, select **_AWS CodeCommit_**.
+
+7. Click on **Repository** and select **_WebAppRepo_**.
+
+8. Select **_master_** for **Branch**
+
+  ![Codebuild Source](img/codebuild-src.png)
+
+#### Environment Setup
+9. Select **_Managed image_** for **Environment image**.
+
+10. Select **_Ubuntu_** for **Operating system**.
+
+11. Select **_Standard_** for **Runtime(s)**,
+
+13. Select **_aws/codebuild/standard:2.0_** for **Image**,
+
+14. Select **_Always use the latest image for this runtime version_** for the **Image version**.
+
+15. Select **_Existing service role_** for **Service role**.
+
+16. Select **_CodeBuildRole_** for **Role name**.
+
+  ![Codebuild Environment](img/codebuild-env.png)
+
+#### Buildspec Setup
+17. Select **_Use a buildspec file_** for **Build specifications**.
+
+  ![Codebuild Buildspec](img/codebuild-buildspec.png)
+
+#### Artifacts Setup
+
+18. Select **_Amazon S3_** for Artifacts **Type**.
+
+19. Select **_webapp-bucket-12345_** (or whichever you have named) for the **Bucket name**.
+
+20. Enter `WebAppOutputArtifact.zip` for **Name** of the output artifact.
+
+21. Select **_Zip_** for **Artifacts packaging**.
+
+  ![Codebuild Project](img/codebuild-artifacts.png)
+
+22. Click on **Create build project**.
+
+***
+
+### Stage 7: Let's build the code on cloud
+
+A buildspec is a collection of build commands and related settings in YAML format, that AWS CodeBuild uses to run a build. To learn more about the buildspec syntax and what it means, check out the documentation [here](https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html#build-spec-ref-syntax).
+
+1. Create a new file in your Cloud9 console by clicking on the **+** icon. Select **New File**.
+  ![New File](img/cloud9-new-file.png)
+
+2. Copy the contents below to the file.
+
+  ```yaml
+  version: 0.2
+
+  phases:
+    install:
+        runtime-versions:
+            java: openjdk8
+    pre_build:
+      commands:
+        - echo Nothing to do in the pre_build phase...
+    build:
+      commands:
+        - echo Build started on `date`
+        - mvn install
+    post_build:
+      commands:
+        - echo Build completed on `date`
+  artifacts:
+    files:
+      - target/javawebdemo.war
+  ```
+
+3. **Save** the file by clicking on File > Save. Enter `buildspec.yml` as the **Filename** and save the file in the **_WebApprepo_** folder as shown:
+
+  ![buildspec](./img/build-spec.png)
+
+4. In your Cloud9 console, commit & push the build specification file to repository using the commands below:
 ```console
 user:~/environment/WebAppRepo/ $ git add buildspec.yml
 user:~/environment/WebAppRepo/ $ git commit -m "adding buildspec.yml"
 user:~/environment/WebAppRepo/ $ git push -u origin master
-
 ```
 
-3. Run the **_start-build_** command:
+5. Go back or open up the [CodeBuild console](https://ap-southeast-1.console.aws.amazon.com/codesuite/codebuild/projects?region=ap-southeast-1).
 
+6. Select the CodeBuild project (**MyCodeBuildProject**) that you have created earlier and click on **Start build**.
+
+  ![Start Build](img/start-build.png)
+
+7. Click on **Start build** to begin the build process with default settings.
+
+>Alternatively, you can also initiate a start-build command from your Cloud9 console via the following command:
 ```console
-user:~/environment/WebAppRepo (master) $ aws codebuild start-build --project-name devops-webapp-project
+user:~/environment/WebAppRepo (master) $ aws codebuild start-build --project-name MyCodeBuildProject
 ```
+8. Notice the log generated by the build process.
 
-**_Note:_** You can start build with more advance configuration setting via JSON. If you are interested to learn more about it, please visit [here](http://docs.aws.amazon.com/codebuild/latest/userguide/run-build.html#run-build-cli).
+9. Once the build is completed, you can head over to [Amazon S3](https://console.aws.amazon.com/s3/home?region=ap-southeast-1) and view the artifact uploaded into the output S3 bucket.
 
-4. If successful, data would appear showing successful submission. Make a note of the build id value. You will need it in the next step.
-5. In this step, you will view summarized information about the status of your build.
+  ![S3 Artifact](img/s3-artifact.png)
 
-```console
-user:~/environment/WebAppRepo (master) $ aws codebuild batch-get-builds --ids <<ID>>
-```
+>**_Note:_** Troubleshooting CodeBuild - Use the [information](http://docs.aws.amazon.com/codebuild/latest/userguide/troubleshooting.html) to help you identify, diagnose, and address any issues.
 
-**_Note:_** Replace <<ID>> with the id value that appeared in the output of the previous step.
 
-6. You will also be able to view detailed information about your build in CloudWatch Logs. You can complete this step by visiting the [AWS CodeBuild console](https://console.aws.amazon.com/codebuild/home).
-![buildsuccess](./img/Lab1-CodeBuild-Success.png)
-
-7. In this step, you will verify the **_WebAppOutputArtifact.zip_** file that AWS CodeBuild built and then uploaded to the output bucket. You can complete this step by **visiting** the **AWS CodeBuild console** or the **Amazon S3 console**.
-
-**_Note:_** Troubleshooting CodeBuild - Use the [information](http://docs.aws.amazon.com/codebuild/latest/userguide/troubleshooting.html) to help you identify, diagnose, and address issues.
 
 ### Summary:
 

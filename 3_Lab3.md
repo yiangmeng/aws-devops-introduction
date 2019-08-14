@@ -1,7 +1,34 @@
 
 ## Lab 3 - Setup CI/CD using AWS CodePipeline
 
-### Stage 1: Create a Pipeline (Console)
+### Stage 1: Create the Pipeline Service Role
+
+1. Let's now initialize an automated pipeline in AWS CodePipeline. Before we do that, let's create an IAM role for this Pipeline service to give it permissions to call other AWS services on your behalf. Head over to [IAM Roles](https://console.aws.amazon.com/iam/home?#/roles) console.
+
+2. Click on **Create role**.
+
+3. Under **Select type of trusted entity**, choose **AWS service**.
+
+4. Under **Choose the service that will use this role** select **CodePipeline**.
+
+5. Select **_CodeDeploy_** for **Use case**
+
+  ![Codebuild Role](img/codedeploy-role.png)
+
+6. Click on **Next: Permissions**.
+
+7. There should already be a policy **AWSCodeDeployRole** attached. Click on **Next: Tags** to proceed.
+
+8. Click on **Next: Review**.
+
+9. Enter `CodeDeployRole` in **Role name**.
+
+10. Click on **Create role** to complete creating the role.
+
+
+### Stage 1: Create a Pipeline
+
+**AWS CodePipeline** is a fully managed continuous delivery service that helps you automate your release pipelines for fast and reliable application and infrastructure updates. CodePipeline automates the build, test, and deploy phases of your release process every time there is a code change, based on the release model you define.
 
 To create a pipeline in the console, you'll need to provide the source file location and information about the providers you will use for your actions.
 
@@ -24,7 +51,7 @@ Within a single AWS account, each pipeline you create in a region must have a un
 
 6. On the **Step 2: Source** page, in the **Source provider** drop-down list, select **AWS CodeCommit**.
 
-7. In **Repository name**, choose **WebAppRepo**, which is the name of the AWS CodeCommit repository you created in Lab 1 to use as the source location for your pipeline. 
+7. In **Repository name**, choose **WebAppRepo**, which is the name of the AWS CodeCommit repository you created in Lab 1 to use as the source location for your pipeline.
 
 8. In **Branch name**, from the drop-down list, choose the **master** branch.
 
@@ -165,7 +192,7 @@ Once you approve, the pipeline continues and completes successfully.
 ![pipeline-edit](./img/webxml.png)
 
 3. Edit <display-name> to add some (!) marks and save the file.
-  
+
 ![pipeline-edit](./img/webxmlchanges.png)
 
 4. Change the directory to your local repo folder. Run **_git add_** to stage the change:
@@ -187,7 +214,7 @@ user:~/environment/WebAppRepo/ $ git commit -m "Let it fly!"
 user:~/environment/WebAppRepo/ $ git push -u origin master
 ```
 
-***This will trigger the Code Pipeline to execute and deploy the changes (with approval) into the production environment*** 
+***This will trigger the Code Pipeline to execute and deploy the changes (with approval) into the production environment***
 
 
 ### Summary

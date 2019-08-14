@@ -198,6 +198,7 @@
     "DevWebApp01" : {
       "Type" : "AWS::EC2::Instance",
       "Properties": {
+        "IamInstanceProfile" : {"Ref" : "TeamRoleInstanceProfile"},
         "ImageId" : { "Fn::FindInMap" : [ "AWSRegionVirt2AMI", { "Ref" : "AWS::Region" }, {"Fn::FindInMap": ["AWSInstanceType2Virt", { "Fn::FindInMap" : [ "instancesTypes", "Demo", "INST" ]}, "Virt"]} ]},
         "InstanceType" : { "Fn::FindInMap" : [ "instancesTypes", "Demo", "INST" ]},
         "EbsOptimized" : {"Fn::FindInMap": ["AWSInstanceType2EBSOpt", { "Fn::FindInMap" : [ "instancesTypes", "Demo", "INST" ]}, "EBSOpt"]},
@@ -230,6 +231,7 @@
     "ProdWebApp01" : {
       "Type" : "AWS::EC2::Instance",
       "Properties": {
+        "IamInstanceProfile" : {"Ref" : "TeamRoleInstanceProfile"},
         "ImageId" : { "Fn::FindInMap" : [ "AWSRegionVirt2AMI", { "Ref" : "AWS::Region" }, {"Fn::FindInMap": ["AWSInstanceType2Virt", { "Fn::FindInMap" : [ "instancesTypes", "Demo", "INST" ]}, "Virt"]} ]},
         "InstanceType" : { "Fn::FindInMap" : [ "instancesTypes", "Demo", "INST" ]},
         "EbsOptimized" : {"Fn::FindInMap": ["AWSInstanceType2EBSOpt", { "Fn::FindInMap" : [ "instancesTypes", "Demo", "INST" ]}, "EBSOpt"]},
@@ -256,7 +258,15 @@
           {"Key" : "Name", "Value" : "ProdWebApp01" }
         ]
       }
-    }
+    },
+
+    "TeamRoleInstanceProfile" : {
+      "Type" : "AWS::IAM::InstanceProfile",
+      "Properties" : {
+        "Path" : "/",
+        "Roles" : ["TeamRole"]
+      }
+    },
 
   },
 
