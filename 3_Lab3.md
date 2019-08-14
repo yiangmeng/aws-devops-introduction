@@ -1,31 +1,6 @@
 
 ## Lab 3 - Setup CI/CD using AWS CodePipeline
 
-### Stage 1: Create the Pipeline Service Role
-
-1. Let's now initialize an automated pipeline in AWS CodePipeline. Before we do that, let's create an IAM role for this Pipeline service to give it permissions to call other AWS services on your behalf. Head over to [IAM Roles](https://console.aws.amazon.com/iam/home?#/roles) console.
-
-2. Click on **Create role**.
-
-3. Under **Select type of trusted entity**, choose **AWS service**.
-
-4. Under **Choose the service that will use this role** select **CodePipeline**.
-
-5. Select **_CodeDeploy_** for **Use case**
-
-  ![Codebuild Role](img/codedeploy-role.png)
-
-6. Click on **Next: Permissions**.
-
-7. There should already be a policy **AWSCodeDeployRole** attached. Click on **Next: Tags** to proceed.
-
-8. Click on **Next: Review**.
-
-9. Enter `CodeDeployRole` in **Role name**.
-
-10. Click on **Create role** to complete creating the role.
-
-
 ### Stage 1: Create a Pipeline
 
 **AWS CodePipeline** is a fully managed continuous delivery service that helps you automate your release pipelines for fast and reliable application and infrastructure updates. CodePipeline automates the build, test, and deploy phases of your release process every time there is a code change, based on the release model you define.
@@ -36,35 +11,51 @@ When you use the pipeline wizard, AWS CodePipeline creates the names of stages (
 
 Also, existing pipeline configuration can be exported and used to create pipeline in another region.
 
-1. Sign in to the **AWS Management Console** and open the **AWS CodePipeline** console at [http://console.aws.amazon.com/codepipeline](http://console.aws.amazon.com/codepipeline).
-2. On the **CodePipeline Home** page, choose **Create pipeline**.
+1. Head over to the [AWS CodePipeline](http://console.aws.amazon.com/codepipeline) console.
 
+2. Click on **Create pipeline**.
 
-3. On the **Step 1: Choose pipeline settings** page, in the **Pipeline name** box, type the name for your pipeline (your choice)
+3. Enter `MyWebAppPipeline` for the **Pipeline name**.
 
-4. For **Service role**, Select **Existing service role** and choose the Role name from drop down **TeamRole**.
+4. Select **_New service role_** for **Service role**.
 
-5. Open up the **Advanced settings** tab, for **Artifact store**, Select **Custom location** and choose the Bucket from drop down starting with **cicd-workshop**, and then choose **Next step**.
+5. Enter `AWSCodePipelineServiceRole-ap-southeast-1-MyWebAppPipeline` for the **Role name** (should already be pre-populated).
+
+6. Open up the **Advanced settings** tab, for **Artifact store**, Select **Custom location** and choose the Bucket from drop down **_webapp-bucket-12345_** where **_12345_** is the bucket name you have defined, and then choose **Next**.
+
+  ![Pipeline Settings](img/codepipeline-settings.png)
 
 **_Note_**:
 Within a single AWS account, each pipeline you create in a region must have a unique name. Names can be reused for pipelines in different regions. After you create a pipeline, you cannot change its name. For information about other limitations, see [Limits in AWS CodePipeline](https://docs.aws.amazon.com/codepipeline/latest/userguide/limits.html).
 
-6. On the **Step 2: Source** page, in the **Source provider** drop-down list, select **AWS CodeCommit**.
+7. Select **_AWS CodeCommit_** for **Source provider**.
 
-7. In **Repository name**, choose **WebAppRepo**, which is the name of the AWS CodeCommit repository you created in Lab 1 to use as the source location for your pipeline.
+8. In **Repository name**, select **_WebAppRepo_**, which is the name of the AWS CodeCommit repository you created in Lab 1 to use as the source location for your pipeline.
 
-8. In **Branch name**, from the drop-down list, choose the **master** branch.
+9. In **Branch name**, from the drop-down list, choose the **_master_** branch.
 
-9. In **Change Detection Mode** select **AWS CodePipeline**. Choose **Next step**.
+10. In **Change Detection Mode** select **_AWS CodePipeline_**. Choose **Next step**.
 
-10. On the **Step 3: Build** page, for **Build Provider**, choose **AWS CodeBuild**, and in **Project name**, select **devops-webapp-project** which is the build project which we we created in Lab 1. Choose **Next**.
+  ![Codepipeline Source](img/codepipeline-source.png)
 
-11. On the **Step 4: Deploy** page, for **Deploy provider**, select **AWS CodeDeploy**, and in **Application name**, select **DevOps-WebApp**, which is the name of the application that was created in Lab2. For **Deployment group**, select **DevOps-WebApp-BetaGroup** which is the name of the deployment group that was created in Lab2. Choose **Next**.
+11. On the **Step 3: Build** page, for **Build Provider**, choose **_AWS CodeBuild_**
 
-12. On the **Step 5: Review** page, review your pipeline configuration, and then choose **Create pipeline** to create the pipeline.
+12. For **Project name**, select **_MyCodeBuildProject_** which is the build project which we we created in Lab 1 and choose **Next**.
+
+  ![Codepipeline Build](img/codepipeline-build.png)
+
+13. On the **Step 4: Deploy** page, for **Deploy provider**, select **AWS CodeDeploy**,
+
+14. For **Application name**, select **MyWebApp**, which is the name of the application that was created in Lab 2.
+
+15. For **Deployment group**, select **WebApp-Dev** which is the name of the deployment group that was created in Lab 2. Choose **Next**.
+
+  ![CodePipeline Deploy](img/codepipeline-deploy.png)
+
+16. On the **Step 5: Review** page, review your pipeline configuration, and then choose **Create pipeline** to create the pipeline.
 
 Image below shows successfully created pipeline.
-![pipeline-complete](./img/Lab3-Stage1-Complete.PNG)
+![pipeline-complete](img/Lab3-Stage1-Complete.PNG)
 
 10. Now that you've created your pipeline, you can view it in the console. Pipeline will start automatically in few minutes. Otherwise, test it by manually clicking the **Release** button.
 

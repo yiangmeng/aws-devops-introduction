@@ -1,22 +1,12 @@
 ## Lab 1 - Build project on the cloud
 
-### Lab IAM Permissions
-As the AWS accounts you are about to use are **lab accounts**, they do not have permissions to make any changes to IAM settings. For any commands/steps that requires IAM Role ARN, please kindly use the pre-created role: **TeamRole**.
-
-https://console.aws.amazon.com/iam/home?region=ap-southeast-1#/roles/TeamRole
-
-***It will be useful to note down the ARN for Team Role which will be required throughout the lab***
-![TeamRole](img/teamrole.png)
-
 ### AWS Cloud9 IDE - Set up
 
-AWS Cloud9 is a cloud-based integrated development environment (IDE) that lets you write, run, and debug your code with just a browser. It includes a code editor, debugger, and terminal. Cloud9 comes pre-packaged with essential tools for popular programming languages and the AWS Command Line Interface (CLI) pre-installed so you don't need to install files or configure your laptop for this workshop. Your Cloud9 environment will have access to the same AWS resources as the user with which you logged into the AWS Management Console.
+**AWS Cloud9** is a cloud-based integrated development environment (IDE) that lets you write, run, and debug your code with just a browser. It includes a code editor, debugger, and terminal. Cloud9 comes pre-packaged with essential tools for popular programming languages and the AWS Command Line Interface (CLI) pre-installed so you don't need to install files or configure your laptop for this workshop. Your Cloud9 environment will have access to the same AWS resources as the user with which you logged into the AWS Management Console.
 
-Take a moment now and setup your Cloud9 development environment.
+Take a moment now to setup your Cloud9 development environment.
 
-### ✅  Step-by-step Instructions
-
-1. Go to the AWS Management Console, click **Services** then select **Cloud9** under Developer Tools.
+1. Head over to the [AWS Cloud9](https://ap-southeast-1.console.aws.amazon.com/cloud9/home?region=ap-southeast-1) console.
 2. Click **Create environment**.
 3. Enter `MyDevEnvironment` into **Name** and optionally provide a **Description**.
 
@@ -26,40 +16,44 @@ Take a moment now and setup your Cloud9 development environment.
 5. You may leave **Environment settings** at their defaults of launching a new **t2.micro** EC2 instance which will be paused after **30 minutes** of inactivity.
 6. Click **Next step**.
 7. Review the environment settings and click **Create environment**. It will take several minutes for your environment to be provisioned and prepared.
-8. Once ready, your IDE will open to a welcome screen. Below that, you should see a terminal prompt similar to: ![setup](./img/setup-cloud9-terminal.png) You can run AWS CLI commands in here just like you would on your local computer. Verify that your user is logged in by running the following command.
+8. Once ready, your IDE will open to a welcome screen. Below that, you should see a terminal prompt similar to:
 
-```console
-user:~/environment $ aws sts get-caller-identity
-```
+  ![setup](./img/setup-cloud9-terminal.png)
 
-You'll see output indicating your account and user information:
-```console
-{
-    "Account": "123456789012",
-    "UserId": "AKIAI44QH8DHBEXAMPLE",
-    "Arn": "arn:aws:iam::123456789012:user/user"
-}
-```
+  You can run AWS CLI commands in here just like you would on your local computer. Verify that your user is logged in by running the following command:
 
-Keep your AWS Cloud9 IDE opened in a tab throughout this workshop as we'll use it for activities like cloning, pushing changes to repository and using the AWS CLI.
+  ```console
+  user:~/environment $ aws sts get-caller-identity
+  ```
 
-### 💡 Tips
+  You'll see output indicating your account and user information:
+  ```console
+  {
+      "Account": "123456789123",
+      "UserId": "AROA4ABCDE2ABCKVTJQI:MasterKey",
+      "Arn": "arn:aws:sts::123456789123:assumed-role/TeamRole/MasterKey"
+  }
+  ```
 
-Keep an open scratch pad in Cloud9 or a text editor on your local computer for notes. When the step-by-step directions tell you to note something such as an ID or Amazon Resource Name (ARN), copy and paste that into the scratch pad.
+  > 💡 Tip: Keep your AWS Cloud9 IDE opened in a tab throughout this workshop as we'll use it for activities like cloning, pushing changes to repository and using the AWS CLI.
 
 ***
 
 ### Stage 1: Create an AWS CodeCommit Repository
+**AWS CodeCommit** is a fully-managed source control service that hosts secure Git-based repositories. It makes it easy for teams to collaborate on code in a secure and highly scalable ecosystem. CodeCommit eliminates the need to operate your own source control system or worry about scaling its infrastructure.
 
-**_To create the AWS CodeCommit repository (console)_**
+In this workshop, we will be using AWS CodeCommit as our code repository.
 
-1. Open the AWS CodeCommit console at <https://console.aws.amazon.com/codecommit>.
+1. Head over to the [AWS CodeCommit](https://console.aws.amazon.com/codecommit) console.
 
-2. On the Welcome page, choose Get Started Now. (If a **_Dashboard_** page appears instead, choose **_Create repository_**.)
+2. On the Welcome page, choose **Get Started Now**. (If a **_Dashboard_** page appears instead, choose **_Create repository_**.)
+
 3. On the **_Create repository_** page, in the **_Repository name_** box, type **_WebAppRepo_**.
-> It is advised that you use the same repository name, **_WebAppRepo_** as it will be used throughout this lab.
+
 4. In the **_Description_** box, optionally type in a description for this repository.
-![WebAppRepo](img/WebAppRepo.png)
+
+  ![WebAppRepo](img/WebAppRepo.png)
+
 5. Choose **_Create_** to create an empty AWS CodeCommit repository named **_WebAppRepo_**.
 
 **Note:** The remaining steps in this lab assume you have named your AWS CodeCommit repository **_WebAppRepo_**. If you use a name other than **_WebAppRepo_**, be sure to use it throughout this tutorial. For more information about creating repositories, including how to create a repository from the terminal or command line, see [Create a Repository](http://docs.aws.amazon.com/codecommit/latest/userguide/how-to-create-repository.html).
@@ -163,36 +157,7 @@ For more information, see [Browse the Contents of a Repository](http://docs.aws.
 
 ***
 
-### Stage 5: Create the Build Service Role
-**AWS CodeBuild** is a fully managed continuous integration service that compiles source code, runs tests, and produces software packages that are ready to deploy. With CodeBuild, you don’t need to provision, manage, and scale your own build servers. CodeBuild scales continuously and processes multiple builds concurrently.
-
-1. Let's now initialize a AWS CodeBuild project. Before we do that, let's create an IAM role for this Build service to give it permissions to call other AWS services on your behalf. Head over to [IAM Roles](https://console.aws.amazon.com/iam/home?#/roles) console.
-
-2. Click on **Create role**.
-
-3. Under **Select type of trusted entity**, choose **AWS service**.
-
-4. Under **Choose the service that will use this role** select **CodeBuild**.
-
-  ![Codebuild Role](img/codebuild-role.png)
-
-5. Click on **Next: Permissions**.
-
-6. Under **Attach permission policies**, check **AWSCodeBuildAdminAccess**.
-
-  ![Codebuild Policies](img/codebuild-policies.png)
-
-7. Click on **Next: Tags** to proceed.
-
-8. Click on **Next: Review**.
-
-9. Enter `CodeBuildRole` in **Role name**.
-
-10. Click on **Create role** to complete creating the role.
-
-***
-
-### Stage 6: Create the Build Service
+### Stage 5: Create the Build Service
 
 1. Head over to [AWS CodeBuild](https://ap-southeast-1.console.aws.amazon.com/codesuite/codebuild/projects?region=ap-southeast-1) console.
 
@@ -227,9 +192,9 @@ For more information, see [Browse the Contents of a Repository](http://docs.aws.
 
 14. Select **_Always use the latest image for this runtime version_** for the **Image version**.
 
-15. Select **_Existing service role_** for **Service role**.
+15. Select **_New service role_** for **Service role**.
 
-16. Select **_CodeBuildRole_** for **Role name**.
+16. Enter `codebuild-MyCodeBuildProject-service-role` for the **Role Name**. (this should be pre-filled for you)
 
   ![Codebuild Environment](img/codebuild-env.png)
 
@@ -254,7 +219,7 @@ For more information, see [Browse the Contents of a Repository](http://docs.aws.
 
 ***
 
-### Stage 7: Let's build the code on cloud
+### Stage 6: Let's build the code on cloud
 
 A buildspec is a collection of build commands and related settings in YAML format, that AWS CodeBuild uses to run a build. To learn more about the buildspec syntax and what it means, check out the documentation [here](https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html#build-spec-ref-syntax).
 

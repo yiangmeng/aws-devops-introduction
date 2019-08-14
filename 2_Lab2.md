@@ -13,62 +13,25 @@ We will be using **AWS CloudFormation** to quickly deploy our Dev and Prod envir
 
 4. Select **_Amazon S3 URL_** for **Template source**.
 
-5. Paste ``
+5. Paste `https://aws-labs-workshops.s3-ap-southeast-1.amazonaws.com/aws-devops-workshop-environment-setup.template` in **Amazon S3 URL**.
 
-Run the CloudFormation stack using the following AWS CLI command:
+6. Click on **Next**.
 
-```console
-user:~/environment/WebAppRepo (master) $ aws cloudformation create-stack --stack-name DevopsWorkshop-Env \
---template-body https://yhlim-share.s3-ap-southeast-1.amazonaws.com/labs/devops/02-aws-devops-workshop-environment-setup.template
-```
-2. After the CloudFromation Stack has completed, go to view your [EC2 console](https://ap-southeast-1.console.aws.amazon.com/ec2/v2/home?region=ap-southeast-1#Instances:sort=desc:launchTime) to view the EC2 instances.
+7. Enter `MyWebStack` as **Stack name** and click on **Next**.
 
-**_Note_**
-  - The Stack will have a VPC w/ 1 public subnet, an IGW, route tables, ACL, 2 EC2 instances. Also, the EC2 instances will be launched with a User Data script to **automatically install the AWS CodeDeploy agent**.
+8. Accept the default stack options and click on **Next**.
 
-  - You can refer to [this instruction](http://docs.aws.amazon.com/codedeploy/latest/userguide/codedeploy-agent-operations-install.html) to install the CodeDeploy agent for other OSs like Amazon Linux, RHEL, Ubuntu, or Windows.
+9. Check **_I acknowledge that AWS CloudFormation might create IAM resources._** and click on **Create stack** to begin creating the stack. The stack creation process can take a couple of minutes. You may proceed to the next stage while the stack is building.
 
-#### Note: The additional steps below are required due to the IAM constraints of the Lab AWS Accounts. ####
+10. After the CloudFormation Stack has completed, you can go to the [EC2 console](https://ap-southeast-1.console.aws.amazon.com/ec2/v2/home?region=ap-southeast-1#Instances:sort=desc:launchTime) to view the EC2 instances.
 
-3. Attach IAM Role (Team Role) to the the Dev EC2 instance (DevWebApp01) created by selecting the instance and click on the ***Action Button -> Instance -> Instance Settings -> Attach/Detach IAM Role***.
-
-![AttachRole](./img/attach-role.png)
-
-4. Next find in the drop-down box the ***Team Role*** under IAM Role and click Apply.
-
-5. Repeat steps 2-4 for Production EC2 Instance (ProdWebApp01).
-
-6. Go to the [Security Group](https://ap-southeast-1.console.aws.amazon.com/ec2/v2/home?region=ap-southeast-1#SecurityGroups:Name=WebAppSG;sort=vpcId) section in the console.
-
-7. Look for ***WebAppSg*** Security Group and copy/remember the ***Group ID***.
-
-8. Select ***WebAppSG*** Security Group and click on the Inbound tab and click Edit.
-
-9. Add a new Rule, Type = SSH, Source = Custom, paste the ***Group ID*** copied earlier. Click Save.
-![sg-ssh](./img/sg-ssh.png)
-
-10. Go to [Systems Manager console](https://ap-southeast-1.console.aws.amazon.com/systems-manager/session-manager/sessions?region=ap-southeast-1) under Session Manager.
-
-11. Click ***Start Session***, select DevWebApp01 and click Update SSM Agent. Confirm Update SSM Agent. Go back to Systems Manager.
-![ssm-update](./img/ssm-update.png)
-
-12. You might have to repeat step 10-11 twice in order for the agent to be updated successfully.
-
-13. Go back to [Systems Manager console](https://ap-southeast-1.console.aws.amazon.com/systems-manager/session-manager/sessions?region=ap-southeast-1) and click ***Start Session***, select DevWebApp01 and click Start Session.
-
-14. Run the following command to restart the CodeDeploy Agent. ***It will take some time to restart, terminate the session after it ends***
-
-```console
-$ sudo service codedeploy-agent restart
-```
-
-15. Repeat steps 10-14 for Production EC2 Instance (ProdWebApp01).
-
+>**_Note:_** The Stack will have a VPC w/ 1 public subnet, an IGW, route tables, ACL, 2 EC2 instances. Also, the EC2 instances will be launched with a User Data script to **automatically install the AWS CodeDeploy agent**.
+>
+>You can refer to [this instruction](http://docs.aws.amazon.com/codedeploy/latest/userguide/codedeploy-agent-operations-install.html) to install the CodeDeploy agent for other OSs like Amazon Linux, RHEL, Ubuntu, or Windows.
 
 ***
 
-
-### Stage 1: Create the Deploy Service Role
+### Stage 2: Create the Deploy Service Role
 
 1. Let's now initialize a AWS CodeDeploy application deployment. Before we do that, let's create an IAM role for this Deploy service to give it permissions to call other AWS services on your behalf. Head over to [IAM Roles](https://console.aws.amazon.com/iam/home?#/roles) console.
 
