@@ -25,7 +25,7 @@ We will be using **AWS CloudFormation** to quickly deploy our Dev and Prod envir
 
 10. After the CloudFormation Stack has completed, you can go to the [EC2 console](https://ap-southeast-1.console.aws.amazon.com/ec2/v2/home?region=ap-southeast-1#Instances:sort=desc:launchTime) to view the EC2 instances.
 
->**_Note:_** The Stack will have a VPC w/ 1 public subnet, an IGW, route tables, ACL, 2 EC2 instances. Also, the EC2 instances will be launched with a User Data script to **automatically install the AWS CodeDeploy agent**.
+>**_Note:_** The Stack will have a VPC with 1 public subnet, an Internet Gateway, route tables, ACL, 2 EC2 instances (1 Dev and 1 Prod). Also, the EC2 instances will be launched with a User Data script that will **automatically install the AWS CodeDeploy agent** upon initialization.
 >
 >You can refer to [this instruction](http://docs.aws.amazon.com/codedeploy/latest/userguide/codedeploy-agent-operations-install.html) to install the CodeDeploy agent for other OSs like Amazon Linux, RHEL, Ubuntu, or Windows.
 
@@ -180,7 +180,7 @@ user:~/environment/WebAppRepo/ $ git push -u origin master
 
 ***
 
-### Stage 4: Deploy an application revision
+### Stage 4: Build and Deploy an application revision
 
 1. Head over to the [AWS CodeBuild](https://ap-southeast-1.console.aws.amazon.com/codesuite/codebuild/projects?region=ap-southeast-1) console.
 
@@ -207,7 +207,7 @@ user:~/environment/WebAppRepo (master) $ aws codebuild start-build --project-nam
 
 9. Select **_My application is stored in Amazon S3_** for the **Revision type**.
 
-10. Enter `s3://webapp-bucket-12345/WebAppOutputArtifact` where `12345` corresponds to the S3 bucket name you have specified for the **Revision location**.
+10. Enter `s3://webapp-bucket-12345/WebAppOutputArtifact.zip` where `12345` corresponds to the S3 bucket name you have specified for the **Revision location**.
 
 11. Select **_.zip_** for **Revision file type**.
 

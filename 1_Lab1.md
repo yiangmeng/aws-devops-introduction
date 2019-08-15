@@ -157,9 +157,44 @@ For more information, see [Browse the Contents of a Repository](http://docs.aws.
 
 ***
 
-### Stage 5: Create the Build Service
+### Stage 5: Create the Build Service Role
+**AWS CodeBuild** is a fully managed continuous integration service that compiles source code, runs tests, and produces software packages that are ready to deploy. With CodeBuild, you don’t need to provision, manage, and scale your own build servers. CodeBuild scales continuously and processes multiple builds concurrently.
 
-1. Head over to [AWS CodeBuild](https://ap-southeast-1.console.aws.amazon.com/codesuite/codebuild/projects?region=ap-southeast-1) console.
+1. Let's now initialize a AWS CodeBuild project. Before we do that, let's create an IAM role for this Build service to give it permissions to call other AWS services on your behalf. Head over to [IAM Roles](https://console.aws.amazon.com/iam/home?#/roles) console.
+
+2. Click on **Create role**.
+
+3. Under **Select type of trusted entity**, choose **AWS service**.
+
+4. Under **Choose the service that will use this role** select **CodeBuild**.
+
+  ![Codebuild Role](img/codebuild-role.png)
+
+5. Click on **Next: Permissions**.
+
+6. Under **Attach permission policies**, check **_AWSCodeBuildAdminAccess_**.
+
+  ![Codebuild Policies](img/codebuild-policies.png)
+
+7. Additionally, search for _s3_ and check **_AmazonS3ReadOnlyAccess_**.
+
+  ![Codebuild Policies](img/codebuild-policies2.png)
+
+8. Click on **Next: Tags** to proceed.
+
+9. Click on **Next: Review**.
+
+10. Enter `CodeBuildRole` in **Role name**. You should also see **AWSCodeBuildAdminAccess** and **AmazonS3FullAccess** in the list of policies attached as shown.
+
+  ![Codebuild Policies](img/codebuild-policies3.png)
+
+11. Click on **Create role** to complete creating the role.
+
+***
+
+### Stage 6: Create the Build Service
+
+1. Head over to the [AWS CodeBuild](https://ap-southeast-1.console.aws.amazon.com/codesuite/codebuild/projects?region=ap-southeast-1) console.
 
 2. Click on **Create build project**.
 
@@ -192,9 +227,9 @@ For more information, see [Browse the Contents of a Repository](http://docs.aws.
 
 14. Select **_Always use the latest image for this runtime version_** for the **Image version**.
 
-15. Select **_New service role_** for **Service role**.
+15. Select **_Existing service role_** for **Service role**.
 
-16. Enter `codebuild-MyCodeBuildProject-service-role` for the **Role Name**. (this should be pre-filled for you)
+16. Select the **_CodeBuildRole_** which we have created earlier for the **Role Name**.
 
   ![Codebuild Environment](img/codebuild-env.png)
 
@@ -219,7 +254,7 @@ For more information, see [Browse the Contents of a Repository](http://docs.aws.
 
 ***
 
-### Stage 6: Let's build the code on cloud
+### Stage 7: Let's build the code on cloud
 
 A buildspec is a collection of build commands and related settings in YAML format, that AWS CodeBuild uses to run a build. To learn more about the buildspec syntax and what it means, check out the documentation [here](https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html#build-spec-ref-syntax).
 
@@ -280,7 +315,6 @@ user:~/environment/WebAppRepo (master) $ aws codebuild start-build --project-nam
   ![S3 Artifact](img/s3-artifact.png)
 
 >**_Note:_** Troubleshooting CodeBuild - Use the [information](http://docs.aws.amazon.com/codebuild/latest/userguide/troubleshooting.html) to help you identify, diagnose, and address any issues.
-
 
 
 ### Summary:
