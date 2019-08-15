@@ -172,11 +172,11 @@ For more information, see [Browse the Contents of a Repository](http://docs.aws.
 
 5. Click on **Next: Permissions**.
 
-6. Under **Attach permission policies**, check **_AWSCodeBuildAdminAccess_**.
+6. Type in the search box `codebuild`. You will see a list of managed policies displayed. Check the box for **_AWSCodeBuildAdminAccess_** as shown below.
 
   ![Codebuild Policies](img/codebuild-policies.png)
 
-7. Additionally, search for _s3_ and check **_AmazonS3ReadOnlyAccess_**.
+7. Additionally, search for _s3_ and check **_AmazonS3ReadOnlyAccess_** as shown below.
 
   ![Codebuild Policies](img/codebuild-policies2.png)
 

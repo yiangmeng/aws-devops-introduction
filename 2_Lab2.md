@@ -111,7 +111,7 @@ An AppSpec file is a YAML file used by CodeDeploy to determine:
 
 Let's now create an AppSpec file so that AWS CodeDeploy can map the source files in your application revision to their destinations and run scripts at various stages of the deployment.
 
-1. Copy the template into a text editor and **save** the file as `appspec.yml` in the **_WebAppRepo_** directory of the revision.
+1. Copy the template into a text editor in your Cloud9 Console as a new file and **save** the file as `appspec.yml` in the **_WebAppRepo_** directory of the revision.
 
   ```yml
   version: 0.0
