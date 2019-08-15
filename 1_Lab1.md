@@ -184,7 +184,7 @@ For more information, see [Browse the Contents of a Repository](http://docs.aws.
 
 9. Click on **Next: Review**.
 
-10. Enter `CodeBuildRole` in **Role name**. You should also see **AWSCodeBuildAdminAccess** and **AmazonS3FullAccess** in the list of policies attached as shown.
+10. Enter `CodeBuildRole` in **Role name**. You should also see **AWSCodeBuildAdminAccess** and **AmazonS3ReadOnlyAccess** in the list of policies attached as shown.
 
   ![Codebuild Policies](img/codebuild-policies3.png)
 
