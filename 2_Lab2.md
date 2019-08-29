@@ -1,5 +1,4 @@
-
-## Lab 2 - Automate deployment for testing
+## [CLI] Lab 2 - Automate deployment for testing
 
 ### Stage 1: Prepare environment for Dev and Prod Servers
 

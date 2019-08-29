@@ -1,5 +1,5 @@
 
-## Lab 3 - Setup CI/CD using AWS CodePipeline
+## [CLI] Lab 3 - Setup CI/CD using AWS CodePipeline
 
 ### Stage 1: Create a Pipeline
 
