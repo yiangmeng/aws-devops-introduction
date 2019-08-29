@@ -29,22 +29,17 @@ For this workshop, we will be issuing lab accounts for you to use to try out the
 4. Let's get started! Head over to Lab 1 below to begin.
 
 # Labs
-This workshop is broken into multiple labs. You must complete each Lab before proceeding to the next.
-
 :warning: **STOP!** We have prepared **two paths** you can take to complete this lab. Both paths lead to the same outcome, but with different experience. If you're a more visual person and is comfortable with clicking things and filling out forms to get things done, Choose **_Path 1_** below. If you're a pro-user of command line and loves to type stuff in a command prompt, **_Path 2_** is for you!
 
 #### Path 1: Using AWS Console ####
-1. [Lab 1 - Build project on the cloud](1_Lab1.md)
-2. [Lab 2 - Automate deployment for testing](2_Lab2.md)
-3. [Lab 3 - Setup CI/CD using AWS CodePipeline](3_Lab3.md)
+1. [Lab 1 - Build project on the cloud](https://github.com/yiangmeng/aws-devops-introduction/blob/master/1_Lab1.md)
+2. [Lab 2 - Automate deployment for testing](https://github.com/yiangmeng/aws-devops-introduction/blob/master/2_Lab2.md)
+3. [Lab 3 - Setup CI/CD using AWS CodePipeline](https://github.com/yiangmeng/aws-devops-introduction/blob/master/3_Lab3.md)
 
-#### Path 2: Command Line Interface (CLI) ####
+#### Path 2: Using Command Line Interface (CLI) ####
 1. [Lab 1 - Build project on the cloud](https://github.com/yiangmeng/aws-devops-introduction/blob/cli/1_Lab1.md)
 2. [Lab 2 - Automate deployment for testing](https://github.com/yiangmeng/aws-devops-introduction/blob/cli/2_Lab2.md)
 3. [Lab 3 - Setup CI/CD using AWS CodePipeline](https://github.com/yiangmeng/aws-devops-introduction/blob/cli/3_Lab3.md)
-
-
-
 
 
 ## License
