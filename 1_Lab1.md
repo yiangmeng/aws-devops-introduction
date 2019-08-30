@@ -321,4 +321,4 @@ user:~/environment/WebAppRepo (master) $ aws codebuild start-build --project-nam
 
 This **concludes Lab 1**. In this lab, we successfully created repository with version control using AWS CodeCommit and built our code on the cloud using AWS CodeBuild service. You can now move to the next Lab,
 
-[Lab 2 - Automate deployment for testing](https://github.com/yiangmeng/aws-devops-introduction/blob/cli/2_Lab2.md)
+[Lab 2 - Automate deployment for testing](https://github.com/yiangmeng/aws-devops-introduction/blob/master/2_Lab2.md)
