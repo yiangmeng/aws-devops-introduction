@@ -231,4 +231,4 @@ user:~/environment/WebAppRepo (master) $ aws codebuild start-build --project-nam
 
 This **concludes Lab 2**. In this lab, we successfully created CodeDeploy application and deployment group. We also modified buildspec.yml to include additional components needed for deployment. We also successfully completed deployment of application to our development server. You can now move to the next Lab:
 
-[Lab 3 - Setup CI/CD using AWS CodePipeline](https://github.com/yiangmeng/aws-devops-introduction/blob/cli/3_Lab3.md)
+[Lab 3 - Setup CI/CD using AWS CodePipeline](https://github.com/yiangmeng/aws-devops-introduction/blob/master/3_Lab3.md)
