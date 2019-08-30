@@ -4,25 +4,17 @@
 
 We will be using **AWS CloudFormation** to quickly deploy our Dev and Prod environments, complete with the VPC, subnets, security groups and instance profile all setup.
 
-1. Head over to the [AWS CloudFormation](https://ap-southeast-1.console.aws.amazon.com/cloudformation/home?region=ap-southeast-1) console.
+1. Run the following command to deploy the CloudFormation script:
+```console
+user:~/environment $ aws cloudformation create-stack --stack-name MyWebStack --template-url https://aws-labs-workshops.s3-ap-southeast-1.amazonaws.com/aws-devops-workshop-environment-setup.template --capabilities CAPABILITY_IAM
+```
+2. You can check the progress of the stack creation progress by running the command:
+  ```console
+  user:~/environment $ aws cloudformation list-stacks
+  ```
 
-2. Click on **Create stack**.
+3. After the CloudFormation Stack has completed, you can go to the [EC2 console](https://ap-southeast-1.console.aws.amazon.com/ec2/v2/home?region=ap-southeast-1#Instances:sort=desc:launchTime) to view the EC2 instances.
 
-3. Select **_Template is ready_** for **Prepare template**.
-
-4. Select **_Amazon S3 URL_** for **Template source**.
-
-5. Paste `https://aws-labs-workshops.s3-ap-southeast-1.amazonaws.com/aws-devops-workshop-environment-setup.template` in **Amazon S3 URL**.
-
-6. Click on **Next**.
-
-7. Enter `MyWebStack` as **Stack name** and click on **Next**.
-
-8. Accept the default stack options and click on **Next**.
-
-9. Check **_I acknowledge that AWS CloudFormation might create IAM resources._** and click on **Create stack** to begin creating the stack. The stack creation process can take a couple of minutes. You may proceed to the next stage while the stack is building.
-
-10. After the CloudFormation Stack has completed, you can go to the [EC2 console](https://ap-southeast-1.console.aws.amazon.com/ec2/v2/home?region=ap-southeast-1#Instances:sort=desc:launchTime) to view the EC2 instances.
 
 >**_Note:_** The Stack will have a VPC with 1 public subnet, an Internet Gateway, route tables, ACL, 2 EC2 instances (1 Dev and 1 Prod). Also, the EC2 instances will be launched with a User Data script that will **automatically install the AWS CodeDeploy agent** upon initialization.
 >
@@ -32,77 +24,89 @@ We will be using **AWS CloudFormation** to quickly deploy our Dev and Prod envir
 
 ### Stage 2: Create the Deploy Service Role
 
-1. Let's now initialize a AWS CodeDeploy application deployment. Before we do that, let's create an IAM role for this Deploy service to give it permissions to call other AWS services on your behalf. Head over to [IAM Roles](https://console.aws.amazon.com/iam/home?#/roles) console.
+1. Before we begin, let's create an IAM role for this Deploy service to give it permissions to call other AWS services on your behalf. Open up a **New File** in your Cloud9 console.
 
-2. Click on **Create role**.
+  ![Open New File](img/cloud9-new-file.png)
 
-3. Under **Select type of trusted entity**, choose **AWS service**.
+3. Paste the following content:
+  ```json
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "codedeploy.amazonaws.com"
+        },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  }
+  ```
+  **_💡 Tip_** As you can see in the policy document above, we're going to create a role that allows CodeDeploy to assume it.
 
-4. Under **Choose the service that will use this role** select **CodeDeploy**.
 
-5. Select **_CodeDeploy_** for **Use case**
+4. Save the file by clicking on File > Save. Enter `codedeploy-policy.json` as the **Filename** and save the file in the  **MyDevEnvironment** root folder as shown.
+![Save CodeBuild POlicy](img/codedeploy-policy.png)
 
-  ![Codebuild Role](img/codedeploy-role.png)
+5. Run the following command in your Cloud9 IDE to create a role:
+  ```console
+  user:~/environment (master) $ aws iam create-role --role-name CodeDeployRole --assume-role-policy-document file://../codedeploy-policy.json
+  ```
+6. If successful, you will see the output of the **CodeDeployRole** that we have just created. Note down the **Arn** value and save it somewhere. We will need it later.
 
-6. Click on **Next: Permissions**.
+  ![CodeBuild ARN](img/codedeploy-arn.png)
 
-7. There should already be a policy **AWSCodeDeployRole** attached. Click on **Next: Tags** to proceed.
+6. We will attach several managed policies to this role to grant it permissions. Run the commands below:
+  ```console
+  user:~/environment (master) $ aws iam attach-role-policy --policy-arn arn:aws:iam::aws:policy/AWSCodeDeployRole --role-name CodeDeployRole
+  ```
+  **_Note:_** The managed policies attached above are for this lab environment only. In a Production environment, you will **not** be giving such a wide policy permission.
 
-8. Click on **Next: Review**.
+7. That's it! You can verify that the policies have successfully been attached to the role by running the command:
+  ```console
+  user:~/environment (master) $ aws iam list-attached-role-policies --role-name CodeDeployRole
+  ```
+8. You will see the list as shown:
+  ```console
+  {
+      "AttachedPolicies": [
+          {
+              "PolicyName": "AWSCodeDeployRole",
+              "PolicyArn": "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
+          }
+      ]
+  }
+  ```
 
-9. Enter `CodeDeployRole` in **Role name**.
-
-10. Click on **Create role** to complete creating the role.
-
-
-### Stage 2: Create CodeDeploy Application and Deployment group
+### Stage 3: Create CodeDeploy Application and Deployment group
 
 **AWS CodeDeploy** is a fully managed deployment service that automates software deployments to a variety of compute services such as Amazon EC2, Fargate, Lambda and even on-premise servers. You can use AWS CodeDeploy to automate software deployments, eliminating the need for error-prone manual operations. The service scales to match your deployment needs.
 
-1. Head over to the [AWS CodeDeploy Applications](https://ap-southeast-1.console.aws.amazon.com/codesuite/codedeploy/applications?region=ap-southeast-1) console.
 
-2. Click on **Create Application**.
+1. Run the following to create an application for CodeDeploy.
 
-3. Enter `MyWebApp` for **Application name**.
+  ```console
+  user:~/environment/WebAppRepo (master) $ aws deploy create-application --application-name MyWebApp
+  ```
 
-4. Select **_EC2/On-premises_** for **Compute platform**.
+2. Run the following to create a deployment group and associate it with the specified application and the user's AWS account. You need to replace the service role with the **CodeDeployRole ARN** from the previous steps.
 
-  ![Application Name](img/codedeploy-app-name.png)
+  ```console
+  user:~/environment/WebAppRepo (master) $ aws deploy create-deployment-group --application-name MyWebApp \
+  --deployment-config-name CodeDeployDefault.OneAtATime \
+  --deployment-group-name WebApp-Dev \
+  --ec2-tag-filters Key=Name,Value=DevWebApp01,Type=KEY_AND_VALUE \
+  --service-role-arn <<REPLACE-WITH-CODEDEPLOY-ROLE-ARN>>
+  ```
 
-5. Click on **Create Application**.
+  **_Note:_** We are using the tags to attach instances to the deployment group.
 
-> Each Application can have multiple Deployment Groups. In an EC2/On-Premises deployment, a deployment group is a set of individual instances targeted for a deployment. A deployment group contains individually tagged instances, Amazon EC2 instances in Amazon EC2 Auto Scaling groups, or both.
-
-6. Let's create a deployment group for our application to target the instances we have just created. Click on **Create deployment group**.
-
-7. Enter `WebApp-Dev` for the **Deployment group name**.
-
-8. Select **_CodeDeployRole_** for the **Service role**.
-
-9. Select **_In-place_** for **Deployment Type**.
-
-10. Check **_Amazon EC2 instances_** for **Environment configuration**.
-
-11. Under **Tag group 1**, enter `Name` for **Key** and `DevWebApp01` for **Value**.
-
-  ![CodeDeploy Environment](img/codedeploy-env.png)
-
-12. You should see *1 unique matched instance* under **Matching instances**.
-> **Note:** The CloudFormation template launched earlier created an EC2 instance for Dev which has a tag value of DevWebApp01.
-
-13. Select **_CodeDeployDefault.OneAtATime_** for **Deployment configuration**.
-
-  ![CodeDeploy Deployment](img/codedeploy-deployment.png)
-
-14. Uncheck **Enable load balancing**.
-
-  ![CodeDeploy Load Balancing](img/codedeploy-elb.png)
-
-15. Click on **Create deployment group** to complete the creation.
+3. You can review all the changes by visiting the [CodeDeploy Console](https://console.aws.amazon.com/codedeploy/home).
 
 ***
 
-### Stage 3: Prepare application for deployment
+### Stage 4: Prepare application for deployment
 
 An AppSpec file is a YAML file used by CodeDeploy to determine:
 - What it should install onto your instances from your application revision in Amazon S3 or GitHub.
@@ -170,64 +174,61 @@ Let's now create an AppSpec file so that AWS CodeDeploy can map the source files
 
 4. Commit & push the build specification file to repository by running the following commands:
 
-```console
-user:~/environment/WebAppRepo/ $ git add *.yml
-user:~/environment/WebAppRepo/ $ git commit -m "changes to build and app spec"
-user:~/environment/WebAppRepo/ $ git push -u origin master
-
-```
-
+  ```console
+  user:~/environment/WebAppRepo/ $ git add *.yml
+  user:~/environment/WebAppRepo/ $ git commit -m "changes to build and app spec"
+  user:~/environment/WebAppRepo/ $ git push -u origin master
+  ```
 ***
 
-### Stage 4: Build and Deploy an application revision
+### Stage 5: Build and Deploy an application revision
 
-1. Head over to the [AWS CodeBuild](https://ap-southeast-1.console.aws.amazon.com/codesuite/codebuild/projects?region=ap-southeast-1) console.
+1. Run the **_start-build_** command:
+  ```console
+  user:~/environment/WebAppRepo (master) $ aws codebuild start-build --project-name MyCodeBuildProject
+  ```
 
-2. Select the build project **MyCodeBuildProject** and click **Start build**.
+2. Visit the [CodeBuild Console](https://ap-southeast-1.console.aws.amazon.com/codesuite/codebuild/projects/devops-webapp-project/history) build history to ensure build is successful. Upon successful completion of build, we should see new **_WebAppOutputArtifact.zip_** uploaded to the configured CodeBuild S3 Bucket.
 
-3. Accept the defaults and click **Start build** to begin the build process.
+3. Get the **_eTag_** for the object **WebAppOutputArtifact.zip** uploaded to S3 bucket. You can get etag by visiting S3 console. Or, executing the following command.
 
->Alternatively, you can also initiate a start-build command from your Cloud9 console via the following command:
+  ```console
+  user:~/environment/WebAppRepo (master) $ aws s3api head-object --bucket <<YOUR-S3-BUCKET-NAME>> \
+  --key WebAppOutputArtifact.zip
+  ```
+
+  >**_Note:_** The artifact eTag changes each time you execute a Build.
+
+  As a sample S3 properties console showing etag below:
+  ![etag](./img/etag.png)
+
+4. Run the following to create a deployment. **_Replace_** <<YOUR-S3-BUCKET-NAME>> with your **_S3 bucket name_** created in Lab 1. Also, update the **_eTag_** based on previous step.
+
 ```console
-user:~/environment/WebAppRepo (master) $ aws codebuild start-build --project-name MyCodeBuildProject
+user:~/environment/WebAppRepo (master) $ aws deploy create-deployment --application-name MyWebApp \
+--deployment-group-name WebApp-Dev \
+--description "My very first deployment" \
+--s3-location bucket=<<YOUR-S3-BUCKET-NAME>>,key=WebAppOutputArtifact.zip,bundleType=zip,eTag=<<YOUR-ETAG-VALUE>>
 ```
 
-4. Once the build has completed, head over to the [AWS CodeDeploy Applications](https://ap-southeast-1.console.aws.amazon.com/codesuite/codedeploy/applications?region=ap-southeast-1) console.
+5. **Verify** the deployment status by visiting the [CodeDeploy console](https://ap-southeast-1.console.aws.amazon.com/codesuite/codedeploy/deployments?region=ap-southeast-1).
 
-5. Open up the Application **MyWebApp**.
+  ![deployment-success](./img/Lab2-CodeDeploy-deploymentSuccess.png)
 
-6. Open up the deployment group **WebApp-Dev**.
+6. Check the deploy console for status. if the deployment failed, then look at the error message and correct the deployment issue.
 
-7. Click on **Create deployment**.
+7. If the status of deployment is success, we should be able to view the web application deployed successfully to the EC2 server namely **_DevWebApp01_**
 
-  ![Create Deployment](img/codedeploy-create.png)
+8. Go to the [EC2 Console](https://ap-southeast-1.console.aws.amazon.com/ec2/v2/home?region=ap-southeast-1), get the **public DNS name** of the DevWebApp01 instance.
 
-8. Select **_WebApp-Dev_** for the **Deployment group**.
-
-9. Select **_My application is stored in Amazon S3_** for the **Revision type**.
-
-10. Enter `s3://webapp-bucket-12345/WebAppOutputArtifact.zip` where `12345` corresponds to the S3 bucket name you have specified for the **Revision location**.
-
-11. Select **_.zip_** for **Revision file type**.
-
-  ![CodeDeploy Settings](img/codedeploy-settings.png)
-
-12. Click on **Create deployment** to start deploying the build.
-
-13. Verify that deployment succeeds.
-
-  ![Deployment success](img/codedeploy-succeed.png)
-
-14. Go to the [EC2 Console](https://ap-southeast-1.console.aws.amazon.com/ec2/v2/home?region=ap-southeast-1), get the **public DNS name** of the DevWebApp01 instance.
-
-  ![public-dns](img/public-dns.png)
+  ![public-dns](./img/public-dns.png)
 
 9. Open the public DNS name in a browser to see the sample web application deployed.
 
-  ![webpage](img/webpage-success.png)
+  ![webpage](./img/webpage-success.png)
 
 ### Summary
 
 This **concludes Lab 2**. In this lab, we successfully created CodeDeploy application and deployment group. We also modified buildspec.yml to include additional components needed for deployment. We also successfully completed deployment of application to our development server. You can now move to the next Lab:
 
-[Lab 3 - Setup CI/CD using AWS CodePipeline](3_Lab3.md)
+[Lab 3 - Setup CI/CD using AWS CodePipeline](https://github.com/yiangmeng/aws-devops-introduction/blob/cli/3_Lab3.md)

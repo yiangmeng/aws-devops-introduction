@@ -61,37 +61,15 @@ Image below shows successfully executed pipeline.
 
 ### Stage 2: Create CodeDeploy Deployment group for Production
 
+1. Run the following to create a deployment group and associate it with the specified application and the user's AWS account. You need to replace the service role with the **CodeDeployRole ARN** from the previous steps.
 
-1. Head over to the [AWS CodeDeploy Applications](https://ap-southeast-1.console.aws.amazon.com/codesuite/codedeploy/applications?region=ap-southeast-1) console.
-
-2. Click **MyWebApp** to view the deployment groups.
-
-3. You should see an existing **WebApp-Dev** Deployment Group created earlier for the Dev environment. Click **Create deployment group**.
-
-4. Enter `WebApp-Prod` for the **Deployment group name**.
-
-8. Select **_CodeDeployRole_** for the **Service role**.
-
-9. Select **_In-place_** for **Deployment Type**.
-
-10. Check **_Amazon EC2 instances_** for **Environment configuration**.
-
-11. Under **Tag group 1**, enter `Name` for **Key** and `ProdWebApp01` for **Value**.
-
-  ![CodeDeploy Environment](img/codedeploy-env2.png)
-
-12. You should see *1 unique matched instance* under **Matching instances**.
-> **Note:** The CloudFormation template launched earlier created an EC2 instance for Production as well, which has a tag value of ProdWebApp01.
-
-13. Select **_CodeDeployDefault.OneAtATime_** for **Deployment configuration**.
-
-  ![CodeDeploy Deployment](img/codedeploy-deployment.png)
-
-14. Uncheck **Enable load balancing**.
-
-  ![CodeDeploy Load Balancing](img/codedeploy-elb.png)
-
-15. Click on **Create deployment group** to complete the creation.
+  ```console
+  user:~/environment/WebAppRepo (master) $ aws deploy create-deployment-group --application-name MyWebApp \
+  --deployment-config-name CodeDeployDefault.OneAtATime \
+  --deployment-group-name WebApp-Prod \
+  --ec2-tag-filters Key=Name,Value=ProdWebApp01,Type=KEY_AND_VALUE \
+  --service-role-arn <<REPLACE-WITH-CODEDEPLOY-ROLE-ARN>>
+  ```
 
 ***
 
