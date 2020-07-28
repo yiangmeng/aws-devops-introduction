@@ -1,0 +1,7 @@
+#!/bin/bash
+yum install -y aws-cli
+yum install -y git
+cd /home/ec2-user/
+wget https://aws-codedeploy-ap-southeast-1.s3.amazonaws.com/latest/codedeploy-agent.noarch.rpm
+yum -y install codedeploy-agent.noarch.rpm
+service codedeploy-agent start
